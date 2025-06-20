@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="refresh" content="5">
+	<title>Dashboard Robot REF</title>
+	<link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+	<header>
+		<h1>Interface de Suivi Robot REF</h1>
+	</header>
+	<main>
+		<section class="card">
+			<h2>Sélection du robot</h2>
+			<form method="get">
+				<label for="robotSelect">Robot connecté :</label>
+				<select name="selected_id" id="robotSelect" onchange="this.form.submit()">
+					{% for r in robots %}
+						<option value="{{ r.id }}" {% if r.id == robot_id %}selected{% endif %}>
+							{{ r.name }}
+						</option>
+					{% endfor %}
+				</select>
+				<input type="hidden" name="display_mode" value="{{ display_mode }}">
+			</form>
+		</section>
+
+		<section class="card">
+			<h2>Enregistrement Robot</h2>
+			<form method="post" action="/register">
+				<label for="robot_id">UUID du robot :</label>
+				<input type="text" name="robot_id" id="robot_id" required>
+
+				<label for="name">Nom du robot :</label>
+				<input type="text" name="name" id="name" required>
+
+				<button type="submit">Enregistrer</button>
+			</form>
+		</section>
+
+		<section class="card">
+			<h2>Missions envoyées</h2>
+			<form method="get" style="margin-bottom: 1rem;">
+				<input type="hidden" name="selected_id" value="{{ robot_id }}">
+				<label for="display_mode">Mode d'affichage :</label>
+				<select name="display_mode" id="display_mode" onchange="this.form.submit()">
+					<option value="chiffre" {% if display_mode == "chiffre" %}selected{% endif %}>Chiffres</option>
+					<option value="couleur" {% if display_mode == "couleur" %}selected{% endif %}>Couleurs</option>
+				</select>
+			</form>
+			<ul>
+				{% for mission in missions %}
+					<li>
+						<strong>{{ mission.timestamp }}</strong> —
+						{% for bloc in mission.blocs %}
+							{% if display_mode == "couleur" %}
+								{{ bloc_colors[bloc] if bloc in bloc_colors else "❔" }}
+							{% else %}
+								{{ bloc }}
+							{% endif %}
+						{% endfor %}
+					</li>
+				{% else %}
+					<li>Aucune mission trouvée.</li>
+				{% endfor %}
+			</ul>
+		</section>
+
+		<section class="card">
+	<h2>Données simulateur</h2>
+		{% if simulateur.timestamp %}
+			<p>Date : {{ simulateur.timestamp[:19].replace('T', ' ') }}</p>
+		{% endif %}
+		<p>Distance simulée : {{ simulateur.distance }} mm</p>
+		<p>Blocs prévus : {{ simulateur.nb_blocs }}</p>
+		<p>Vitesse cible : {{ simulateur.vitesse }} mm/s</p>
+	</section>
+
+		<section class="card">
+			<h2>Données en temps réel</h2>
+			<p>Vitesse moyenne : {{ telemetry.vitesse_moyenne }} mm/s</p>
+			<p>Blocs déposés : {{ telemetry.nb_blocs_deposes }}</p>
+		</section>
+
+		<section class="card">
+			<h2>Historique Télémétrie</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>Vitesse</th>
+						<th>Ultrasons</th>
+						<th>Déplacement</th>
+						<th>Ligne</th>
+						<th>Pince</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for t in telemetry.entries %}
+						<tr>
+							<td>{{ t.vitesse }}</td>
+							<td>{{ t.distance_ultrasons }}</td>
+							<td>{{ t.statut_deplacement }}</td>
+							<td>{{ t.ligne }}</td>
+							<td>{{ "✔" if t.statut_pince else "✘" }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</section>
+	</main>
+</body>
+</html>
